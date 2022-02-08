@@ -1,0 +1,45 @@
+---
+
+- name: Deploy NGINX Installation
+  hosts: staging
+  become: yes
+
+  roles:
+    - deploy_nginx_install
+
+  tasks: 
+
+  - name: Register NGINX config
+    command: nginx -t
+    ignore_errors: "{{ ansible_check_mode }}"
+    check_mode: false
+    changed_when: false
+    register: nginx
+
+  - name: Print NGINX-t
+    debug:
+      msg: "{{nginx.stderr_lines}}"
+
+  - name: Restart NGINX
+    service:
+      name: nginx
+      state: restarted 
+    when: "'nginx: the configuration file /etc/nginx/nginx.conf syntax is ok' in nginx.stderr_lines"
+
+  - name: Register Apache config
+    command: httpd -t
+    ignore_errors: "{{ ansible_check_mode }}"
+    check_mode: false
+    changed_when: false
+    register: httpd
+
+  - name: Print Apache Test 
+    debug:
+      msg: "{{httpd.stderr_lines}}"
+
+  - name: Restart Apache
+    service:
+      name: httpd
+      state: restarted 
+    when: "'Syntax OK' in httpd.stderr_lines"  
+    
